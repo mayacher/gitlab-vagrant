@@ -1,0 +1,52 @@
+--- # ansible gitlab
+- hosts: gitlab-server
+  user: vagrant
+  become: yes
+  connection: ssh
+  gather_facts: yes
+
+  tasks:
+  - name: install packages
+    yum: pkg={{item}} state=installed
+    with_items:
+    - curl
+    - policycoreutils-python
+    - openssh-server
+    - cronie
+    - postfix
+
+  - name: disable iptables
+    service:
+      name: iptables
+      state: stopped
+
+  - name: start service postfix
+    service:
+      name: postfix
+      state: restarted
+      enabled: yes
+
+  - name: Download gitlab installer
+    get_url: 
+      url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.rpm.sh
+      dest: /tmp/script.rpm.sh
+      mode: 0440
+  
+  - name: check file was download
+    command: ls /tmp
+    register: tmp_ls
+  
+  - debug: var=tmp_ls
+
+  - name: execute gitlab installer     
+    command: bash /tmp/script.rpm.sh
+    register: result
+ 
+  - debug: var=result
+
+  - name: install gitlab
+    yum: pkg=gitlab-ee state=installed
+    environment: 
+      EXTERNAL_URL: localhost
+    
+

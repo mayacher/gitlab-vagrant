@@ -1,0 +1,5 @@
+[gitlab-server]
+gitlab  ansible_host=127.0.0.1 ansible_port=2222 ansible_ssh_private_key_file="../.vagrant/machines/gitlab/virtualbox/private_key"
+
+[runners]
+runner1 ansible_host=127.0.0.1 ansible_port=2200  ansible_ssh_private_key_file="../.vagrant/machines/gitlab-runner/virtualbox/private_key"
