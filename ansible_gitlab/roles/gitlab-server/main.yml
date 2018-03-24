@@ -43,10 +43,17 @@
     register: result
  
   - debug: var=result
+  
+  #- name: set token in config
+  #  lineinfile:     
+  #    path: /etc/gitlab/gitlab.rb 
+  #    regexp: "['initial_shared_runners_registration_token']"
+  #    line: "gitlab_rails['initial_shared_runners_registration_token'] = `V[6!$[[zy"
 
   - name: install gitlab
     yum: pkg=gitlab-ee state=installed
     environment: 
       EXTERNAL_URL: localhost
+      gitlab_rails["initial_shared_runners_registration_token"]: Km8VnvyZMrXFc3eXVwQL
     
 

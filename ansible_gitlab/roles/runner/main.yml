@@ -1,0 +1,85 @@
+--- # ansible gitlab-runner
+- hosts: runners
+  user: vagrant
+  become: yes
+  connection: ssh
+  gather_facts: yes
+
+  vars_prompt:
+   - name: "token"
+     prompt: "runner token"
+     private: yes
+
+  tasks:
+  - name: disable iptables
+    service:
+      name: iptables
+      state: stopped
+      enabled: false
+
+  - name: install libselinux-python     
+    yum: pkg=libselinux-python state=installed 
+
+  - name: Add epel repository   
+    get_url:     
+      url: http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm     
+      dest: /tmp/epel-release-6-8.noarch.rpm
+      mode: 0440
+
+  - name: rpm epel
+    yum: 
+      name: /tmp/epel-release-6-8.noarch.rpm
+      state: installed
+ 
+  - name: install centos-release-scl
+    yum: pkg=centos-release-scl state=installed
+
+  - name: install python 2.7 
+    yum: pkg=python27 state=installed
+
+  - name: enable python 2.7 
+    command: scl enable python27 bash
+    register: python_scl
+
+  - debug: var=python_scl
+
+  - name: install python extra
+    yum: pkg={{item}} state=latest     
+    with_items:       
+      - python-pip       
+      - python-setuptools 
+
+  - name: Download gitlab-runner installer
+    get_url: 
+      url: https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh 
+      dest: /tmp/script.rpm.sh
+      mode: 0440
+  
+  - name: check file was download
+    command: ls /tmp/script.rpm.sh
+    register: tmp_ls
+  
+  - debug: var=tmp_ls
+
+  - name: execute runner installer     
+    command: bash /tmp/script.rpm.sh
+    register: result
+ 
+  - debug: var=result
+
+  - name: install gitlab-runner
+    yum: pkg=gitlab-runner state=installed
+
+  - name: install pip packages
+    pip: name={{item}} state=latest
+    with_items:
+      - pip
+      - setuptools
+      - pyopenssl 
+      - ndg-httpsclient pyasn1
+      - awcli
+
+  - name: register runner
+    command: gitlab-runner register --non-interactive --name runner1 --url http://192.168.20.2 --registration-token {{ token }} --executor shell
+    
+
