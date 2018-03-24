@@ -44,12 +44,6 @@
       dest: /usr/local/bin/python
       state: link
   
-  - name: make python2.7 run as python bin    
-    file:       
-      src: /opt/rh/python27/root/usr/bin/python2.7       
-      dest: /usr/bin/python2.7     
-      state: link
-
 
   - name: add pip
     file:
@@ -57,12 +51,6 @@
       dest: /usr/local/bin/pip
       state: link     
     
-  - name: add pip     
-    file:       
-      src: /opt/rh/python27/root/usr/bin/pip       
-      dest: /usr/bin/pip2       
-      state: link
-  
   - name: add python ldconf
     blockinfile:
       path: /etc/ld.so.conf 
@@ -72,10 +60,6 @@
   - name: run ldconfig
     command: ldconfig
 
- # - name: install python extra
- #   yum: pkg={{item}} state=latest     
- #   with_items:
- #     - python-setuptools 
 
   - name: Download gitlab-runner installer
     get_url: 
@@ -99,13 +83,18 @@
     yum: pkg=gitlab-runner state=installed
   
   - name: install pip packages
-    pip: name={{item}} state=latest      
-    with_items:
-      - pyopenssl 
-      - ndg-httpsclient pyasn1
-      - awcli
-    environment:
-      PATH: /usr/local/bin
+    pip: 
+      name: awscli
+      state: latest 
+      extra_args: --user
+    become: true
+    become_user: vagrant
+
+  - name: add aws to path
+    lineinfile:
+      path: .bash_profile
+      regexp: "PATH=$PATH:$HOME/bin"
+      line: "PATH=$PATH:$HOME/bin:.local/bin"
   
   - name: register runner
     command: gitlab-runner register --non-interactive --name runner1 --url http://192.168.20.2 --registration-token {{ token }} --executor shell
